@@ -1,4 +1,4 @@
-from validator import validate
+from security.validator import validate
 
 code = """
 import os
