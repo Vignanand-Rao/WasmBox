@@ -1,0 +1,1 @@
+open("secret.txt", "r")
