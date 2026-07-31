@@ -1,66 +1,52 @@
-import subprocess
+"""
+runtime/runner.py
+----------------
+Main entry point runner for WasmBox. Handles command-line invocation
+and coordinates with the execution engine.
+"""
+
 import sys
-import time
-import tempfile
 import os
 
-def run_python_code(code: str, timeout_seconds: int = 5) -> dict:
-    """
-    Executes raw Python code inside an isolated subprocess.
-    Captures stdout, stderr, execution time, and handles timeouts/exceptions.
-    """
-    start_time = time.perf_counter()
+# Ensure the root directory is in python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from runtime.executor import WasmExecutor
+
+def main():
+    print("=== WasmBox Runner Initialized ===")
     
-    # Write code to a temporary file for clean execution
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
-        temp_file.write(code)
-        temp_file_path = temp_file.name
+    # Target .wasm file to run (adjust path as needed for your project tests)
+    target_wasm = sys.argv[1] if len(sys.argv) > 1 else "sample.wasm"
+    
+    if not os.path.exists(target_wasm):
+        print(f"[-] Warning: Target WASM file '{target_wasm}' not found.")
+        print("[*] Place a compiled .wasm file in your directory or pass its path as an argument.")
+        print("    Example: python runtime/runner.py path/to/module.wasm")
+        return
 
-    try:
-        # Run the code using Python's executable in an isolated subprocess
-        process = subprocess.run(
-            [sys.executable, temp_file_path],
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds
-        )
+    print(f"[*] Loading execution engine for: {target_wasm}")
+    executor = WasmExecutor()
+    
+    # Execute the module
+    result = executor.execute(target_wasm)
+    
+    print("\n--- Execution Report ---")
+    print(f"Success: {result['success']}")
+    print(f"Exit Code: {result['exit_code']}")
+    print(f"Execution Time: {result['execution_time_ms']} ms")
+    
+    if result["stdout"]:
+        print("\n[STDOUT]:")
+        print(result["stdout"].strip())
         
-        execution_time = round((time.perf_counter() - start_time) * 1000, 2)  # in ms
+    if result["stderr"]:
+        print("\n[STDERR]:")
+        print(result["stderr"].strip())
         
-        return {
-            "status": "success" if process.returncode == 0 else "error",
-            "stdout": process.stdout,
-            "stderr": process.stderr,
-            "exit_code": process.returncode,
-            "execution_time_ms": execution_time,
-            "memory_usage_mb": None
-        }
-
-    except subprocess.TimeoutExpired:
-        execution_time = round((time.perf_counter() - start_time) * 1000, 2)
-        return {
-            "status": "timeout",
-            "stdout": "",
-            "stderr": f"Execution Timed Out: Program exceeded limit of {timeout_seconds} seconds.",
-            "exit_code": -1,
-            "execution_time_ms": execution_time,
-            "memory_usage_mb": None
-        }
-    except Exception as e:
-        return {
-            "status": "exception",
-            "stdout": "",
-            "stderr": f"Runtime Engine Error: {str(e)}",
-            "exit_code": -1,
-            "execution_time_ms": 0,
-            "memory_usage_mb": None
-        }
-    finally:
-        # Clean up temporary file
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+    if not result["success"] and result["error"]:
+        print("\n[ERROR]:")
+        print(result["error"])
 
 if __name__ == "__main__":
-    sample_code = "print('Hello from WasmBox Runtime!')"
-    result = run_python_code(sample_code)
-    print("Execution Result:", result)
+    main()
