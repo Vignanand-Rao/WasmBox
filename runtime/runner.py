@@ -4,13 +4,13 @@ runtime/runner.py
 Main entry point runner for WasmBox. Handles command-line invocation
 and coordinates with the execution engine.
 """
-
 import sys
 import os
 
 # Ensure the root directory is in python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from security.gateway import process_code
 from runtime.executor import WasmExecutor
 
 def main():
@@ -27,6 +27,15 @@ def main():
 
     print(f"[*] Loading execution engine for: {target_wasm}")
     executor = WasmExecutor()
+    
+    user_code = 'print("Hello")'
+    
+    security_result = process_code(user_code)
+    if not security_result["success"]:
+        print("\n--- Security Report ---")
+        print(security_result["errors"])
+        return
+    
     
     # Execute the module
     result = executor.execute(target_wasm)
