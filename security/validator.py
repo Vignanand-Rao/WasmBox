@@ -1,5 +1,5 @@
 import ast
-from blocked import BLOCKED_MODULES, BLOCKED_FUNCTIONS
+from security.blocked import BLOCKED_MODULES, BLOCKED_FUNCTIONS
 
 class SecurityVisitor(ast.NodeVisitor):
     def __init__(self):
