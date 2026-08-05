@@ -14,9 +14,14 @@ def root():
     }
 
 
-@app.get("/health")
+@app.get(
+    "/health",
+    tags=["System"],
+    summary="Backend Health Check"
+)
 def health():
     return {
-        "status": "healthy"
+        "status": "healthy",
+        "service": "WasmBox Backend",
+        "version": "1.0.0"
     }
-app.include_router(router)
