@@ -1,6 +1,6 @@
 These explanations are perfect for your **project documentation**, **PPT**, or **viva**.
 
----
+-----
 
 # 1. What `blocked.py` Does
 
