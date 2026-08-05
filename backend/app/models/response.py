@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-
 class CodeResponse(BaseModel):
     status: str
     output: str
