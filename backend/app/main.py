@@ -4,7 +4,13 @@ from fastapi import FastAPI
 app = FastAPI(
     title="WasmBox Backend API",
     description="Secure Python Code Execution Platform",
-    version="1.0.0"
+    version="1.0.0",
+    contact={
+        "name": "WasmBox Team"
+    },
+    license_info={
+        "name": "MIT"
+    }
 )
 
 @app.get("/")
@@ -14,9 +20,14 @@ def root():
     }
 
 
-@app.get("/health")
+@app.get(
+    "/health",
+    tags=["System"],
+    summary="Backend Health Check"
+)
 def health():
     return {
-        "status": "healthy"
+        "status": "healthy",
+        "service": "WasmBox Backend",
+        "version": "1.0.0"
     }
-app.include_router(router)
