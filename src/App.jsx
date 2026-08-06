@@ -7,17 +7,23 @@ const [code, setCode] = useState(`print("Welcome to WasmBox!")`
 
 const [output, setOutput] = useState("");
 const [error, setError] = useState("");
+const [loading, setLoading] = useState(false);
 const handleRun = () => {
 
+  setLoading(true);
   setError("");
 
-  setOutput(
-`Running Python Code...
+  setTimeout(() => {
+
+    setOutput(`Running Python Code...
 
 ${code}
 
-Execution Completed Successfully.`
-  );
+Execution Completed Successfully.`);
+
+    setLoading(false);
+
+  }, 1500);
 
 };
   return (
@@ -25,8 +31,12 @@ Execution Completed Successfully.`
 
       <header className="header">
         <h1>⚡ WasmBox</h1>
-<button className="run-btn" onClick={handleRun}>
-  Run ▶
+<button
+  className="run-btn"
+  onClick={handleRun}
+  disabled={loading}
+>
+  {loading ? "Running..." : "Run ▶"}
 </button>
       </header>
 
