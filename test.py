@@ -1,5 +1,4 @@
 from security.validator import validate
-
 code = """
 import os
 print("Hello")
