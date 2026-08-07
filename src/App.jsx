@@ -1,85 +1,92 @@
 import { useState } from "react";
 import "./App.css";
 import Editor from "@monaco-editor/react";
+
 function App() {
-const [code, setCode] = useState(`print("Welcome to WasmBox!")`
-);
+  const [code, setCode] = useState(`print("Welcome to WasmBox!")`);
+  const [output, setOutput] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const [output, setOutput] = useState("");
-const [error, setError] = useState("");
-const [loading, setLoading] = useState(false);
-const handleRun = () => {
+  const handleRun = () => {
+    setLoading(true);
+    setError("");
 
-  setLoading(true);
-  setError("");
-
-  setTimeout(() => {
-
-    setOutput(`Running Python Code...
+    setTimeout(() => {
+      setOutput(`Running Python Code...
 
 ${code}
 
 Execution Completed Successfully.`);
 
-    setLoading(false);
+      setLoading(false);
+    }, 1500);
+  };
 
-  }, 1500);
+  const handleClear = () => {
+    setOutput("");
+    setError("");
+  };
 
-};
   return (
     <div className="container">
-
       <header className="header">
         <h1>⚡ WasmBox</h1>
-<button
-  className="run-btn"
-  onClick={handleRun}
-  disabled={loading}
->
-  {loading ? "Running..." : "Run ▶"}
-</button>
+
+        <button
+          className="run-btn"
+          onClick={handleRun}
+          disabled={loading}
+        >
+          {loading ? "Running..." : "Run ▶"}
+        </button>
       </header>
 
       <main className="main-content">
-
         <div className="editor-section">
           <h3>🐍 Python Editor</h3>
 
-      <Editor
-        height="600px"
-        language="python"
-        theme="vs-dark"
-        value={code}
-        onChange={(value) => setCode(value || "")}
-        options={{
-          fontSize: 16,
-          minimap: { enabled: false },
-          automaticLayout: true,
-        }}
-      />
-
+          <Editor
+            height="600px"
+            language="python"
+            theme="vs-dark"
+            value={code}
+            onChange={(value) => setCode(value || "")}
+            options={{
+              fontSize: 16,
+              minimap: { enabled: false },
+              automaticLayout: true,
+            }}
+          />
         </div>
 
         <div className="output-section">
-
           <div className="console">
-            <h3>🖥 Output</h3>
+            <div className="console-header">
+              <h3>🖥 Output</h3>
+
+              <button
+                className="clear-btn"
+                onClick={handleClear}
+              >
+                Clear
+              </button>
+            </div>
+
             <div className="console-box">
-  <pre>{output}</pre>
-</div>
+              <pre>{output || "Program output will appear here..."}</pre>
+            </div>
           </div>
 
           <div className="console">
             <h3>⚠ Errors</h3>
+
             <div className="console-box">
-  <pre>{error}</pre>
-</div>
+              <pre>{error || "No errors"}</pre>
+            </div>
           </div>
-
         </div>
-
       </main>
-
     </div>
   );
 }
