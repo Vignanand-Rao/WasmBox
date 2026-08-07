@@ -161,3 +161,36 @@ body{
 .clear-btn:hover {
   background: #d93636;
 }
+
+.output-text {
+  color: #00ff88;
+  font-family: Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.error-text {
+  color: #ff5c5c;
+  font-family: Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.console-box {
+  max-height: 260px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.console-box::-webkit-scrollbar {
+  width: 8px;
+}
+
+.console-box::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 10px;
+}
+
+.console-box::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
