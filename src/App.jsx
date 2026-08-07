@@ -8,6 +8,8 @@ function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("Idle");
+  const [executionTime, setExecutionTime] = useState("0.00 ms");
+  const [memoryUsage, setMemoryUsage] = useState("0.00 MB");
 
   const handleRun = () => {
     setLoading(true);
@@ -21,6 +23,9 @@ ${code}
 
 Execution Completed Successfully.`);
 
+      setExecutionTime("42.15 ms");
+      setMemoryUsage("3.84 MB");
+
       setLoading(false);
       setStatus("Success");
     }, 1500);
@@ -29,6 +34,9 @@ Execution Completed Successfully.`);
   const handleClear = () => {
     setOutput("");
     setError("");
+    setStatus("Idle");
+    setExecutionTime("0.00 ms");
+    setMemoryUsage("0.00 MB");
   };
 
   return (
@@ -45,12 +53,24 @@ Execution Completed Successfully.`);
         </button>
       </header>
 
-        <div className="status">
-          Status:
-          <span className={`status-badge ${status.toLowerCase()}`}>
-            {status}
-          </span>
+      <div className="status">
+        Status:
+        <span className={`status-badge ${status.toLowerCase()}`}>
+          {status}
+        </span>
+      </div>
+
+      <div className="metrics">
+        <div className="metric-card">
+          <h4>Execution Time</h4>
+          <p>{executionTime}</p>
         </div>
+
+        <div className="metric-card">
+          <h4>Memory Usage</h4>
+          <p>{memoryUsage}</p>
+        </div>
+      </div>
 
       <main className="main-content">
         <div className="editor-section">
