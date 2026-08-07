@@ -194,3 +194,27 @@ body{
 .console-box::-webkit-scrollbar-thumb:hover {
   background: #777;
 }
+.status {
+  margin-top: 10px;
+  color: white;
+  font-size: 15px;
+}
+
+.status-badge {
+  margin-left: 10px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.status-badge.idle {
+  background: gray;
+}
+
+.status-badge.running {
+  background: orange;
+}
+
+.status-badge.success {
+  background: green;
+}

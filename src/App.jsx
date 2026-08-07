@@ -7,9 +7,11 @@ function App() {
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("Idle");
 
   const handleRun = () => {
     setLoading(true);
+    setStatus("Running");
     setError("");
 
     setTimeout(() => {
@@ -20,6 +22,7 @@ ${code}
 Execution Completed Successfully.`);
 
       setLoading(false);
+      setStatus("Success");
     }, 1500);
   };
 
@@ -41,6 +44,13 @@ Execution Completed Successfully.`);
           {loading ? "Running..." : "Run ▶"}
         </button>
       </header>
+
+        <div className="status">
+          Status:
+          <span className={`status-badge ${status.toLowerCase()}`}>
+            {status}
+          </span>
+        </div>
 
       <main className="main-content">
         <div className="editor-section">
