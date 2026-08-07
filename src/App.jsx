@@ -39,6 +39,17 @@ Execution Completed Successfully.`);
     setMemoryUsage("0.00 MB");
   };
 
+  const handleCopy = async () => {
+  if (!output) return;
+
+      try {
+        await navigator.clipboard.writeText(output);
+        alert("Output copied to clipboard!");
+      } catch (err) {
+        alert("Failed to copy output.");
+      }
+    };
+
   return (
     <div className="container">
       <header className="header">
@@ -104,16 +115,25 @@ Execution Completed Successfully.`);
 
         <div className="output-section">
           <div className="console">
-            <div className="console-header">
-              <h3>🖥 Output</h3>
+<div className="console-header">
+  <h3>🖥 Output</h3>
 
-              <button
-                className="clear-btn"
-                onClick={handleClear}
-              >
-                Clear
-              </button>
-            </div>
+  <div className="console-actions">
+    <button
+            className="copy-btn"
+            onClick={handleCopy}
+          >
+            Copy
+          </button>
+
+          <button
+            className="clear-btn"
+            onClick={handleClear}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
 
             <div className="console-box">
               <pre className="output-text">
