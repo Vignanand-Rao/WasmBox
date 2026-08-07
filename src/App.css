@@ -246,3 +246,23 @@ body{
   font-size: 18px;
   font-weight: bold;
 }
+
+
+.console-actions{
+    display:flex;
+    gap:10px;
+}
+
+.copy-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:6px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.copy-btn:hover{
+    background:#1d4ed8;
+}
