@@ -11,6 +11,7 @@ function App() {
   const [executionTime, setExecutionTime] = useState("0.00 ms");
   const [memoryUsage, setMemoryUsage] = useState("0.00 MB");
 
+
   const handleRun = () => {
     setLoading(true);
     setStatus("Running");
@@ -30,6 +31,14 @@ Execution Completed Successfully.`);
       setStatus("Success");
     }, 1500);
   };
+
+
+  const handleEditorMount = (editor) => {
+  editor.addCommand(
+    2048 | 3,
+    handleRun
+  );
+};
 
   const handleClear = () => {
     setOutput("");
@@ -93,6 +102,7 @@ Execution Completed Successfully.`);
             theme="vs-dark"
             value={code}
             onChange={(value) => setCode(value || "")}
+             onMount={handleEditorMount}
             options={{
               fontSize: 16,
               fontFamily: "Consolas",
