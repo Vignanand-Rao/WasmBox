@@ -1,5 +1,13 @@
+import logging
+
 from app.routes.execute import router
 from fastapi import FastAPI
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
 
 app = FastAPI(
     title="WasmBox Backend API",
@@ -31,3 +39,4 @@ def health():
         "service": "WasmBox Backend",
         "version": "1.0.0"
     }
+app.include_router(router)
