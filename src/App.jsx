@@ -48,6 +48,16 @@ Execution Completed Successfully.`);
     setMemoryUsage("0.00 MB");
   };
 
+
+  const handleReset = () => {
+  setCode(`print("Welcome to WasmBox!")`);
+  setOutput("");
+  setError("");
+  setStatus("Idle");
+  setExecutionTime("0.00 ms");
+  setMemoryUsage("0.00 MB");
+};
+
   const handleCopy = async () => {
   if (!output) return;
 
@@ -71,6 +81,14 @@ Execution Completed Successfully.`);
         >
           {loading ? "Running..." : "Run ▶"}
         </button>
+
+              <button
+        className="reset-btn"
+        onClick={handleReset}
+        disabled={loading}
+      >
+        Reset
+</button>
       </header>
 
       <div className="status">

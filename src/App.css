@@ -266,3 +266,24 @@ body{
 .copy-btn:hover{
     background:#1d4ed8;
 }
+
+
+.reset-btn {
+  background: #555;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: 0.3s;
+}
+
+.reset-btn:hover {
+  background: #666;
+}
+
+.reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
