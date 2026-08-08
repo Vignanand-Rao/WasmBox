@@ -287,3 +287,10 @@ body{
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+
+.editor-hint {
+  margin: 6px 0 10px;
+  color: #888;
+  font-size: 13px;
+}

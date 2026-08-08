@@ -11,7 +11,6 @@ function App() {
   const [executionTime, setExecutionTime] = useState("0.00 ms");
   const [memoryUsage, setMemoryUsage] = useState("0.00 MB");
 
-
   const handleRun = () => {
     setLoading(true);
     setStatus("Running");
@@ -26,19 +25,14 @@ Execution Completed Successfully.`);
 
       setExecutionTime("42.15 ms");
       setMemoryUsage("3.84 MB");
-
       setLoading(false);
       setStatus("Success");
     }, 1500);
   };
 
-
   const handleEditorMount = (editor) => {
-  editor.addCommand(
-    2048 | 3,
-    handleRun
-  );
-};
+    editor.addCommand(2048 | 3, handleRun);
+  };
 
   const handleClear = () => {
     setOutput("");
@@ -48,47 +42,62 @@ Execution Completed Successfully.`);
     setMemoryUsage("0.00 MB");
   };
 
-
   const handleReset = () => {
-  setCode(`print("Welcome to WasmBox!")`);
-  setOutput("");
-  setError("");
-  setStatus("Idle");
-  setExecutionTime("0.00 ms");
-  setMemoryUsage("0.00 MB");
-};
+    setCode(`print("Welcome to WasmBox!")`);
+    setOutput("");
+    setError("");
+    setStatus("Idle");
+    setExecutionTime("0.00 ms");
+    setMemoryUsage("0.00 MB");
+  };
 
   const handleCopy = async () => {
-  if (!output) return;
+    if (!output) return;
 
-      try {
-        await navigator.clipboard.writeText(output);
-        alert("Output copied to clipboard!");
-      } catch (err) {
-        alert("Failed to copy output.");
-      }
-    };
+    try {
+      await navigator.clipboard.writeText(output);
+      alert("Output copied to clipboard!");
+    } catch (err) {
+      alert("Failed to copy output.");
+    }
+  };
+
+  const handleDownload = () => {
+    if (!output) return;
+
+    const blob = new Blob([output], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "output.txt";
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="container">
       <header className="header">
         <h1>⚡ WasmBox</h1>
 
-        <button
-          className="run-btn"
-          onClick={handleRun}
-          disabled={loading}
-        >
-          {loading ? "Running..." : "Run ▶"}
-        </button>
+        <div className="header-actions">
+          <button
+            className="run-btn"
+            onClick={handleRun}
+            disabled={loading}
+          >
+            {loading ? "Running..." : "Run ▶"}
+          </button>
 
-              <button
-        className="reset-btn"
-        onClick={handleReset}
-        disabled={loading}
-      >
-        Reset
-</button>
+          <button
+            className="reset-btn"
+            onClick={handleReset}
+            disabled={loading}
+          >
+            Reset
+          </button>
+        </div>
       </header>
 
       <div className="status">
@@ -113,6 +122,9 @@ Execution Completed Successfully.`);
       <main className="main-content">
         <div className="editor-section">
           <h3>🐍 Python Editor</h3>
+          <p className="editor-hint">
+  Press Ctrl + Enter to run your code
+</p>
 
           <Editor
             height="600px"
@@ -120,7 +132,7 @@ Execution Completed Successfully.`);
             theme="vs-dark"
             value={code}
             onChange={(value) => setCode(value || "")}
-             onMount={handleEditorMount}
+            onMount={handleEditorMount}
             options={{
               fontSize: 16,
               fontFamily: "Consolas",
@@ -135,33 +147,40 @@ Execution Completed Successfully.`);
               renderLineHighlight: "all",
               padding: {
                 top: 12,
-                bottom: 12,
-              },
+                bottom: 12
+              }
             }}
           />
         </div>
 
         <div className="output-section">
           <div className="console">
-<div className="console-header">
-  <h3>🖥 Output</h3>
+            <div className="console-header">
+              <h3>🖥 Output</h3>
 
-  <div className="console-actions">
-    <button
-            className="copy-btn"
-            onClick={handleCopy}
-          >
-            Copy
-          </button>
+              <div className="console-actions">
+                <button
+                  className="download-btn"
+                  onClick={handleDownload}
+                >
+                  Download
+                </button>
 
-          <button
-            className="clear-btn"
-            onClick={handleClear}
-          >
-            Clear
-          </button>
-        </div>
-      </div>
+                <button
+                  className="copy-btn"
+                  onClick={handleCopy}
+                >
+                  Copy
+                </button>
+
+                <button
+                  className="clear-btn"
+                  onClick={handleClear}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
 
             <div className="console-box">
               <pre className="output-text">
