@@ -12,6 +12,7 @@ class CodeRequest(BaseModel):
         default="python",
         description="Programming language"
     )
+    session_id: str | None = None
 
     @field_validator("code")
     @classmethod
