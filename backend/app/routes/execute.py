@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import queue
 
@@ -24,7 +25,7 @@ router = APIRouter()
     tags=["Execution"],
     summary="Execute user code securely"
 )
-def execute(request: CodeRequest):
+async def execute(request: CodeRequest):
     # Create a new session if the client does not provide one.
     if request.session_id is None:
         session_id = create_session()
@@ -65,7 +66,7 @@ def execute(request: CodeRequest):
         )
 
     try:
-        result = future.result()
+        result = await asyncio.wrap_future(future)
 
         return {
             **result,
