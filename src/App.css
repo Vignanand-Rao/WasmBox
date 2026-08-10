@@ -294,3 +294,17 @@ body{
   color: #888;
   font-size: 13px;
 }
+
+.download-btn {
+  background: #16a34a;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.download-btn:hover {
+  background: #15803d;
+}

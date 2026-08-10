@@ -11,23 +11,66 @@ function App() {
   const [executionTime, setExecutionTime] = useState("0.00 ms");
   const [memoryUsage, setMemoryUsage] = useState("0.00 MB");
 
-  const handleRun = () => {
+  const handleRun = async () => {
     setLoading(true);
     setStatus("Running");
     setError("");
+    setOutput("");
 
-    setTimeout(() => {
-      setOutput(`Running Python Code...
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/execute",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            code: code,
+            language: "python",
+          }),
+        }
+      );
 
-${code}
+      const result = await response.json();
 
-Execution Completed Successfully.`);
+      if (!response.ok) {
+        throw new Error(result.detail || "Execution failed");
+      }
 
-      setExecutionTime("42.15 ms");
-      setMemoryUsage("3.84 MB");
+      setOutput(result.output || "");
+
+      setExecutionTime(
+        `${Number(result.execution_time || 0).toFixed(2)} ms`
+      );
+
+      setMemoryUsage(
+        `${Number(result.memory_usage || 0).toFixed(2)} MB`
+      );
+
+      if (result.status === "success") {
+        setStatus("Success");
+        setError("");
+      } else {
+        setStatus("Failed");
+
+        setError(
+          result.errors?.join("\n") || "Execution failed"
+        );
+      }
+    } catch (err) {
+      setStatus("Failed");
+
+      setError(
+        err.message || "Unable to connect to backend"
+      );
+
+      setOutput("");
+      setExecutionTime("0.00 ms");
+      setMemoryUsage("0.00 MB");
+    } finally {
       setLoading(false);
-      setStatus("Success");
-    }, 1500);
+    }
   };
 
   const handleEditorMount = (editor) => {
@@ -65,7 +108,10 @@ Execution Completed Successfully.`);
   const handleDownload = () => {
     if (!output) return;
 
-    const blob = new Blob([output], { type: "text/plain" });
+    const blob = new Blob([output], {
+      type: "text/plain",
+    });
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
@@ -102,7 +148,9 @@ Execution Completed Successfully.`);
 
       <div className="status">
         Status:
-        <span className={`status-badge ${status.toLowerCase()}`}>
+        <span
+          className={`status-badge ${status.toLowerCase()}`}
+        >
           {status}
         </span>
       </div>
@@ -122,9 +170,10 @@ Execution Completed Successfully.`);
       <main className="main-content">
         <div className="editor-section">
           <h3>🐍 Python Editor</h3>
+
           <p className="editor-hint">
-  Press Ctrl + Enter to run your code
-</p>
+            Press Ctrl + Enter to run your code
+          </p>
 
           <Editor
             height="600px"
@@ -147,8 +196,8 @@ Execution Completed Successfully.`);
               renderLineHighlight: "all",
               padding: {
                 top: 12,
-                bottom: 12
-              }
+                bottom: 12,
+              },
             }}
           />
         </div>
@@ -184,7 +233,8 @@ Execution Completed Successfully.`);
 
             <div className="console-box">
               <pre className="output-text">
-                {output || "Program output will appear here..."}
+                {output ||
+                  "Program output will appear here..."}
               </pre>
             </div>
           </div>
