@@ -12,7 +12,7 @@ from runtime.config import SandboxConfig
 
 try:
     import wasmtime
-    from wasmtime import Engine, Store, Module, Linker, WasiConfig, WasmtimeError
+    from wasmtime import Engine, Store, Module, Linker, WasiConfig, WasmtimeError, Config
 except ImportError:
     wasmtime = None
 
@@ -23,7 +23,12 @@ class WasmExecutor:
             raise ImportError("The 'wasmtime' package is required. Install it using: pip install wasmtime")
         
         self.sandbox_config = config or SandboxConfig()
-        self.engine = Engine()
+        
+        # Configure the Wasmtime engine to support fuel consumption if a limit is set
+        engine_config = Config()
+        if self.sandbox_config.fuel_limit > 0:
+            engine_config.consume_fuel = True
+        self.engine = Engine(engine_config)
 
     def execute(
         self,
@@ -43,7 +48,7 @@ class WasmExecutor:
             }
 
         func_args = func_args or []
-        env_vars = env_vars or {}
+        env_vars = dict(env_vars or {})
 
         stdout_fd, stdout_path = tempfile.mkstemp()
         stderr_fd, stderr_path = tempfile.mkstemp()
@@ -53,14 +58,37 @@ class WasmExecutor:
             wasi_config = WasiConfig()
             wasi_config.stdout_file = stdout_path
             wasi_config.stderr_file = stderr_path
-            wasi_config.argv = [wasm_path] + [str(a) for a in func_args]
+            
+            # 1. Pre-open the script's directory for execution
+            processed_argv = [wasm_path]
+            for arg in func_args:
+                arg_str = str(arg)
+                if os.path.isfile(arg_str):
+                    host_dir = os.path.dirname(os.path.abspath(arg_str))
+                    filename = os.path.basename(arg_str)
+                    wasi_config.preopen_dir(host_dir, "/sandbox")
+                    processed_argv.append(f"/sandbox/{filename}")
+                else:
+                    processed_argv.append(arg_str)
+
+            # 2. Pre-open the project root (current working directory) as /app so local modules (like 'security') can be imported
+            project_root = os.getcwd()
+            wasi_config.preopen_dir(project_root, "/app")
+
+            # 3. Inject /app into PYTHONPATH so Python finds local packages
+            if "PYTHONPATH" in env_vars:
+                env_vars["PYTHONPATH"] = f"/app:{env_vars['PYTHONPATH']}"
+            else:
+                env_vars["PYTHONPATH"] = "/app"
+
+            wasi_config.argv = processed_argv
             wasi_config.env = list(env_vars.items())
 
             store = Store(self.engine)
             store.set_wasi(wasi_config)
             
             if self.sandbox_config.fuel_limit > 0:
-                store.add_fuel(self.sandbox_config.fuel_limit)
+                store.set_fuel(self.sandbox_config.fuel_limit)
 
             linker = Linker(self.engine)
             linker.define_wasi()
