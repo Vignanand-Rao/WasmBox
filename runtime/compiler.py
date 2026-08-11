@@ -50,5 +50,7 @@ class PythonWasmCompiler:
             "success": True,
             "error": None,
             "wasm_path": python_wasm_binary_path,
-            "args": [script_path]
+            "script_path": script_path,
+            "guest_script_path": f"/tmp/{os.path.basename(script_path)}",
+            "args": [f"/tmp/{os.path.basename(script_path)}"]
         }

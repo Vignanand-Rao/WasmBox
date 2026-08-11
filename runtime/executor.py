@@ -1,6 +1,4 @@
 """
-runtime/executor.py
--------------------
 Execution engine for WasmBox utilizing configuration parameters.
 """
 
@@ -8,11 +6,20 @@ import os
 import time
 import tempfile
 from typing import Dict, Any, List, Optional
+
 from runtime.config import SandboxConfig
 
 try:
     import wasmtime
-    from wasmtime import Engine, Store, Module, Linker, WasiConfig, WasmtimeError
+    from wasmtime import (
+        Config,
+        Engine,
+        Store,
+        Module,
+        Linker,
+        WasiConfig,
+        WasmtimeError,
+    )
 except ImportError:
     wasmtime = None
 
@@ -20,10 +27,18 @@ except ImportError:
 class WasmExecutor:
     def __init__(self, config: Optional[SandboxConfig] = None):
         if wasmtime is None:
-            raise ImportError("The 'wasmtime' package is required. Install it using: pip install wasmtime")
-        
+            raise ImportError(
+                "The 'wasmtime' package is required. "
+                "Install it using: pip install wasmtime"
+            )
+
         self.sandbox_config = config or SandboxConfig()
-        self.engine = Engine()
+
+        # Configure Wasmtime to support fuel-based execution limits.
+        wasm_config = Config()
+        wasm_config.consume_fuel = True
+
+        self.engine = Engine(wasm_config)
 
     def execute(
         self,
@@ -32,6 +47,7 @@ class WasmExecutor:
         func_args: Optional[List[Any]] = None,
         env_vars: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
+
         if not os.path.exists(wasm_path):
             return {
                 "success": False,
@@ -39,7 +55,7 @@ class WasmExecutor:
                 "stdout": "",
                 "stderr": "",
                 "exit_code": -1,
-                "execution_time_ms": 0.0
+                "execution_time_ms": 0.0,
             }
 
         func_args = func_args or []
@@ -51,16 +67,24 @@ class WasmExecutor:
 
         try:
             wasi_config = WasiConfig()
+
             wasi_config.stdout_file = stdout_path
             wasi_config.stderr_file = stderr_path
+
+            wasi_config.preopen_dir(
+                tempfile.gettempdir(),
+                "/tmp"
+            )
+
             wasi_config.argv = [wasm_path] + [str(a) for a in func_args]
             wasi_config.env = list(env_vars.items())
 
             store = Store(self.engine)
+
             store.set_wasi(wasi_config)
-            
+
             if self.sandbox_config.fuel_limit > 0:
-                store.add_fuel(self.sandbox_config.fuel_limit)
+                store.set_fuel(self.sandbox_config.fuel_limit)
 
             linker = Linker(self.engine)
             linker.define_wasi()
@@ -70,32 +94,60 @@ class WasmExecutor:
 
             if entry_function == "_start":
                 start_func = instance.exports(store).get("_start")
+
                 if start_func:
                     start_func(store)
                 else:
-                    raise RuntimeError("No '_start' exported function found in WASM module.")
+                    raise RuntimeError(
+                        "No '_start' exported function found in WASM module."
+                    )
+
             else:
                 target_func = instance.exports(store).get(entry_function)
+
                 if not target_func:
-                    raise RuntimeError(f"Exported function '{entry_function}' not found.")
+                    raise RuntimeError(
+                        f"Exported function '{entry_function}' not found."
+                    )
+
                 target_func(store, *func_args)
 
-            execution_time = (time.perf_counter() - start_time) * 1000
-            stdout_text = self._read_and_clean(stdout_path, stdout_fd)
-            stderr_text = self._read_and_clean(stderr_path, stderr_fd)
+            execution_time = (
+                time.perf_counter() - start_time
+            ) * 1000
+
+            stdout_text = self._read_and_clean(
+                stdout_path,
+                stdout_fd,
+            )
+
+            stderr_text = self._read_and_clean(
+                stderr_path,
+                stderr_fd,
+            )
 
             return {
                 "success": True,
                 "stdout": stdout_text,
                 "stderr": stderr_text,
                 "exit_code": 0,
-                "execution_time_ms": round(execution_time, 2)
+                "execution_time_ms": round(execution_time, 2),
             }
 
         except Exception as e:
-            execution_time = (time.perf_counter() - start_time) * 1000
-            stdout_text = self._read_and_clean(stdout_path, stdout_fd)
-            stderr_text = self._read_and_clean(stderr_path, stderr_fd)
+            execution_time = (
+                time.perf_counter() - start_time
+            ) * 1000
+
+            stdout_text = self._read_and_clean(
+                stdout_path,
+                stdout_fd,
+            )
+
+            stderr_text = self._read_and_clean(
+                stderr_path,
+                stderr_fd,
+            )
 
             return {
                 "success": False,
@@ -103,17 +155,26 @@ class WasmExecutor:
                 "stdout": stdout_text,
                 "stderr": stderr_text,
                 "exit_code": 1,
-                "execution_time_ms": round(execution_time, 2)
+                "execution_time_ms": round(execution_time, 2),
             }
 
     @staticmethod
     def _read_and_clean(file_path: str, fd: int) -> str:
         try:
             os.close(fd)
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+
+            with open(
+                file_path,
+                "r",
+                encoding="utf-8",
+                errors="replace",
+            ) as f:
                 content = f.read()
+
             if os.path.exists(file_path):
                 os.remove(file_path)
+
             return content
+
         except Exception:
             return ""
