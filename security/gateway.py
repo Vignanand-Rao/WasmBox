@@ -1,6 +1,5 @@
 from security.blocked import check_blocked
 from security.validator import validate
-from security.timeout import check_timeout
 
 def process_code(code):
     blocked = check_blocked(code)
@@ -15,13 +14,6 @@ def process_code(code):
         return {
             "success": False,
             "errors": errors
-        }
-
-    timeout = check_timeout(code)
-    if timeout:
-        return {
-            "success": False,
-            "errors": timeout
         }
 
     return {
