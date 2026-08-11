@@ -12,10 +12,20 @@ function App() {
   const [memoryUsage, setMemoryUsage] = useState("0.00 MB");
 
   const handleRun = async () => {
-    setLoading(true);
-    setStatus("Running");
     setError("");
     setOutput("");
+
+    // Check for empty code before sending the request
+    if (!code.trim()) {
+      setStatus("Failed");
+      setError("Code block is empty");
+      setExecutionTime("0.00 ms");
+      setMemoryUsage("0.00 MB");
+      return;
+    }
+
+    setLoading(true);
+    setStatus("Running");
 
     try {
       const response = await fetch(
@@ -35,7 +45,17 @@ function App() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.detail || "Execution failed");
+        let errorMessage = "Execution failed";
+
+        if (Array.isArray(result.detail)) {
+            errorMessage = result.detail
+            .map((item) => item.msg || "Invalid request")
+            .join("\n");
+          } else if (typeof result.detail === "string") {
+            errorMessage = result.detail;
+          }
+
+          throw new Error(errorMessage);
       }
 
       setOutput(result.output || "");
