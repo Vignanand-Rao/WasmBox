@@ -5,7 +5,6 @@ Execution engine for WasmBox utilizing configuration parameters.
 import os
 import time
 import tempfile
-import threading
 from typing import Dict, Any, List, Optional
 
 from runtime.config import SandboxConfig
@@ -25,6 +24,7 @@ except ImportError:
 
 
 class WasmExecutor:
+
     def __init__(self, config: Optional[SandboxConfig] = None):
         if wasmtime is None:
             raise ImportError(
@@ -39,9 +39,6 @@ class WasmExecutor:
 
         # Enable fuel-based execution limits.
         wasm_config.consume_fuel = True
-
-        # Enable epoch interruption for timeout enforcement.
-        wasm_config.epoch_interruption = True
 
         self.engine = Engine(wasm_config)
 
@@ -70,7 +67,6 @@ class WasmExecutor:
         stderr_fd, stderr_path = tempfile.mkstemp()
 
         start_time = time.perf_counter()
-        timeout_timer = None
 
         try:
             # ---------------------------------------------------------
@@ -81,8 +77,7 @@ class WasmExecutor:
             wasi_config.stdout_file = stdout_path
             wasi_config.stderr_file = stderr_path
 
-            # Only expose the temporary execution directory to the WASM
-            # environment.
+            # Only expose the temporary execution directory.
             wasi_config.preopen_dir(
                 tempfile.gettempdir(),
                 "/tmp"
@@ -111,10 +106,9 @@ class WasmExecutor:
 
             # ---------------------------------------------------------
             # Memory limit
-            #
+            # ---------------------------------------------------------
             # WebAssembly page = 64 KiB.
             # 256 pages = 16 MiB.
-            # ---------------------------------------------------------
             memory_limit_bytes = (
                 self.sandbox_config.MAX_MEMORY_PAGES
                 * 64
@@ -124,25 +118,6 @@ class WasmExecutor:
             store.set_limits(
                 memory_size=memory_limit_bytes
             )
-
-            # ---------------------------------------------------------
-            # Timeout / epoch interruption
-            #
-            # Set the store deadline to one epoch.
-            # A timer increments the engine epoch after the configured
-            # timeout, causing long-running WASM execution to trap.
-            # ---------------------------------------------------------
-            store.set_epoch_deadline(1)
-
-            timeout_seconds = self.sandbox_config.timeout
-
-            timeout_timer = threading.Timer(
-                timeout_seconds,
-                self.engine.increment_epoch
-            )
-
-            timeout_timer.daemon = True
-            timeout_timer.start()
 
             # ---------------------------------------------------------
             # Linker and module
@@ -161,7 +136,7 @@ class WasmExecutor:
             )
 
             # ---------------------------------------------------------
-            # Execute
+            # Execute WASM
             # ---------------------------------------------------------
             if entry_function == "_start":
 
@@ -173,7 +148,8 @@ class WasmExecutor:
                     start_func(store)
                 else:
                     raise RuntimeError(
-                        "No '_start' exported function found in WASM module."
+                        "No '_start' exported function "
+                        "in WASM module."
                     )
 
             else:
@@ -184,7 +160,8 @@ class WasmExecutor:
 
                 if not target_func:
                     raise RuntimeError(
-                        f"Exported function '{entry_function}' not found."
+                        f"Exported function "
+                        f"'{entry_function}' not found."
                     )
 
                 target_func(
@@ -244,10 +221,6 @@ class WasmExecutor:
                     2
                 ),
             }
-
-        finally:
-            if timeout_timer is not None:
-                timeout_timer.cancel()
 
     @staticmethod
     def _read_and_clean(

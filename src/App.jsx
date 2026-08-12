@@ -247,7 +247,7 @@ function App() {
                   onClick={handleClear}
                 >
                   Clear
-                </button>
+              execute  </button>
               </div>
             </div>
 
