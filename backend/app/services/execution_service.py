@@ -6,6 +6,7 @@ from runtime.config import SandboxConfig
 from runtime.compiler import PythonWasmCompiler
 from runtime.executor import WasmExecutor
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,6 +31,9 @@ def execute_code(code: str):
 
     logger.info("Code execution request received")
 
+    # ---------------------------------------------------------
+    # Empty code validation
+    # ---------------------------------------------------------
     if not code.strip():
         logger.warning("Code execution rejected: empty code")
 
@@ -41,12 +45,16 @@ def execute_code(code: str):
             "memory_usage": 0.00
         }
 
+    # ---------------------------------------------------------
     # Step 1: Security validation
+    # ---------------------------------------------------------
     try:
         security_result = process_code(code)
 
     except Exception:
-        logger.exception("Security gateway failed while processing code")
+        logger.exception(
+            "Security gateway failed while processing code"
+        )
 
         return {
             "status": "failed",
@@ -57,7 +65,9 @@ def execute_code(code: str):
         }
 
     if not security_result["success"]:
-        logger.warning("Code execution rejected by security gateway")
+        logger.warning(
+            "Code execution rejected by security gateway"
+        )
 
         return {
             "status": "failed",
@@ -69,7 +79,9 @@ def execute_code(code: str):
 
     logger.info("Code passed security validation")
 
+    # ---------------------------------------------------------
     # Step 2: Prepare Python source for WASM execution
+    # ---------------------------------------------------------
     try:
         compiler = PythonWasmCompiler()
 
@@ -79,7 +91,10 @@ def execute_code(code: str):
         )
 
         if not payload["success"]:
-            logger.error("WASM preparation failed: %s", payload["error"])
+            logger.error(
+                "WASM preparation failed: %s",
+                payload["error"]
+            )
 
             return {
                 "status": "failed",
@@ -90,20 +105,29 @@ def execute_code(code: str):
             }
 
     except Exception:
-        logger.exception("Failed to prepare Python code for WASM execution")
+        logger.exception(
+            "Failed to prepare Python code for WASM execution"
+        )
 
         return {
             "status": "failed",
-            "errors": ["Failed to prepare code for execution"],
+            "errors": [
+                "Failed to prepare code for execution"
+            ],
             "output": "",
             "execution_time": 0.00,
             "memory_usage": 0.00
         }
 
+    # ---------------------------------------------------------
     # Step 3: Execute Python code through Wasmtime
+    # ---------------------------------------------------------
     try:
         config = SandboxConfig()
-        executor = WasmExecutor(config=config)
+
+        executor = WasmExecutor(
+            config=config
+        )
 
         execution_result = executor.execute(
             wasm_path=payload["wasm_path"],
@@ -112,7 +136,9 @@ def execute_code(code: str):
         )
 
     except Exception:
-        logger.exception("WASM execution engine failed")
+        logger.exception(
+            "WASM execution engine failed"
+        )
 
         return {
             "status": "failed",
@@ -122,26 +148,43 @@ def execute_code(code: str):
             "memory_usage": 0.00
         }
 
-    # Step 4: Convert runtime result to API response
+    # ---------------------------------------------------------
+    # Step 4: Convert runtime failure to API response
+    # ---------------------------------------------------------
     if not execution_result["success"]:
+
         errors = []
 
         if execution_result.get("stderr"):
-            errors.append(execution_result["stderr"])
+            errors.append(
+                execution_result["stderr"]
+            )
 
         if execution_result.get("error"):
-            errors.append(execution_result["error"])
+            errors.append(
+                execution_result["error"]
+            )
 
         return {
             "status": "failed",
-            "errors": errors or ["Code execution failed"],
-            "output": execution_result.get("stdout", ""),
+            "errors": (
+                errors
+                or ["Code execution failed"]
+            ),
+            "output": execution_result.get(
+                "stdout",
+                ""
+            ),
             "execution_time": execution_result.get(
-                "execution_time_ms", 0.0
-            ) / 1000,
+                "execution_time_ms",
+                0.0
+            ),
             "memory_usage": 0.00
         }
 
+    # ---------------------------------------------------------
+    # Step 5: Successful execution response
+    # ---------------------------------------------------------
     return {
         "status": "success",
         "errors": (
@@ -149,9 +192,13 @@ def execute_code(code: str):
             if execution_result.get("stderr")
             else None
         ),
-        "output": execution_result.get("stdout", ""),
+        "output": execution_result.get(
+            "stdout",
+            ""
+        ),
         "execution_time": execution_result.get(
-            "execution_time_ms", 0.0
-        ) / 1000,
+            "execution_time_ms",
+            0.0
+        ),
         "memory_usage": 0.00
     }
