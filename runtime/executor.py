@@ -138,6 +138,9 @@ class WasmExecutor:
             # ---------------------------------------------------------
             # Execute WASM
             # ---------------------------------------------------------
+            # Start measuring ONLY the actual WASM execution.
+            execution_start = time.perf_counter()
+
             if entry_function == "_start":
 
                 start_func = instance.exports(
@@ -169,8 +172,9 @@ class WasmExecutor:
                     *func_args
                 )
 
+            # Stop measuring immediately after WASM execution.
             execution_time = (
-                time.perf_counter() - start_time
+                time.perf_counter() - execution_start
             ) * 1000
 
             stdout_text = self._read_and_clean(
