@@ -23,6 +23,19 @@ PYTHON_WASM_PATH = os.path.join(
 )
 
 
+# ---------------------------------------------------------
+# Shared WASM executor
+# ---------------------------------------------------------
+# Create the executor only once.
+#
+# This allows WasmExecutor to keep the compiled WASM module
+# in memory and reuse it for subsequent executions.
+# ---------------------------------------------------------
+_executor = WasmExecutor(
+    config=SandboxConfig()
+)
+
+
 def execute_code(code: str):
     """
     Validate and execute submitted Python code inside the WasmBox
@@ -35,7 +48,9 @@ def execute_code(code: str):
     # Empty code validation
     # ---------------------------------------------------------
     if not code.strip():
-        logger.warning("Code execution rejected: empty code")
+        logger.warning(
+            "Code execution rejected: empty code"
+        )
 
         return {
             "status": "failed",
@@ -77,7 +92,9 @@ def execute_code(code: str):
             "memory_usage": 0.00
         }
 
-    logger.info("Code passed security validation")
+    logger.info(
+        "Code passed security validation"
+    )
 
     # ---------------------------------------------------------
     # Step 2: Prepare Python source for WASM execution
@@ -123,13 +140,7 @@ def execute_code(code: str):
     # Step 3: Execute Python code through Wasmtime
     # ---------------------------------------------------------
     try:
-        config = SandboxConfig()
-
-        executor = WasmExecutor(
-            config=config
-        )
-
-        execution_result = executor.execute(
+        execution_result = _executor.execute(
             wasm_path=payload["wasm_path"],
             entry_function="_start",
             func_args=payload["args"]

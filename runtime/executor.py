@@ -34,13 +34,34 @@ class WasmExecutor:
 
         self.sandbox_config = config or SandboxConfig()
 
-        # Configure Wasmtime.
+        # ---------------------------------------------------------
+        # Configure Wasmtime
+        # ---------------------------------------------------------
         wasm_config = Config()
 
         # Enable fuel-based execution limits.
         wasm_config.consume_fuel = True
 
         self.engine = Engine(wasm_config)
+
+        # Cache compiled WASM modules.
+        # The cache belongs to this Engine.
+        self._module_cache = {}
+
+    def _get_module(self, wasm_path: str):
+        """
+        Compile the WASM module only once per executor instance.
+
+        Subsequent executions reuse the already compiled module.
+        """
+
+        if wasm_path not in self._module_cache:
+            self._module_cache[wasm_path] = Module.from_file(
+                self.engine,
+                wasm_path
+            )
+
+        return self._module_cache[wasm_path]
 
     def execute(
         self,
@@ -120,16 +141,19 @@ class WasmExecutor:
             )
 
             # ---------------------------------------------------------
-            # Linker and module
+            # Linker
             # ---------------------------------------------------------
             linker = Linker(self.engine)
             linker.define_wasi()
 
-            module = Module.from_file(
-                self.engine,
-                wasm_path
-            )
+            # ---------------------------------------------------------
+            # Get cached compiled WASM module
+            # ---------------------------------------------------------
+            module = self._get_module(wasm_path)
 
+            # ---------------------------------------------------------
+            # Instantiate
+            # ---------------------------------------------------------
             instance = linker.instantiate(
                 store,
                 module
@@ -138,7 +162,7 @@ class WasmExecutor:
             # ---------------------------------------------------------
             # Execute WASM
             # ---------------------------------------------------------
-            # Start measuring ONLY the actual WASM execution.
+            # Measure ONLY actual WASM execution.
             execution_start = time.perf_counter()
 
             if entry_function == "_start":
@@ -172,7 +196,7 @@ class WasmExecutor:
                     *func_args
                 )
 
-            # Stop measuring immediately after WASM execution.
+            # Stop execution timer.
             execution_time = (
                 time.perf_counter() - execution_start
             ) * 1000
